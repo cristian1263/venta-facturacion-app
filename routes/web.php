@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,6 +14,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::view('/sesion', 'sesion')->name('sesion');
+Route::view('/home', 'home')->name('home');
+//Route::view('/AuthController.php', 'app\Http\Controllers\AuthController.php')->name('controlador');

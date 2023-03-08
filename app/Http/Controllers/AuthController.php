@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use illuminate\support\facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -15,12 +17,13 @@ class AuthController extends Controller
     public function __construct()
     {
         $this->middleware('jwt', ['except' => ['login', 'register']]);
+        $this->middleware('auth:sanctum')->only('logout');
     }
 
     public function register()
     {
         $user = new User(request()->all());
-        $user->password = bcrypt($user->password);
+        $user->password = $user->password;
         $user->save();
         return response()->json(["data" => $user], 200);
     }
@@ -29,16 +32,27 @@ class AuthController extends Controller
      * Get a JWT via given credentials.
      *
      * @return \Illuminate\Http\JsonResponse
+     *
      */
-    public function login()
-    {
-        $credentials = request(['email', 'password']);
 
-        if (!$token = auth()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+    public function login(Request $request)
+    {
+        $fields = $request->validate([
+            'email' => 'required|exists:users',
+            'password' => 'required'
+        ]);
+
+        $user = User::where('email', $fields['email'])->first();
+
+        if (!Hash::check($fields['password'], $user->password)) {
+            return response()->json([
+                'msg' => 'Bad Credentials'
+            ], 401);
         }
 
-        return $this->respondWithToken($token);
+        return response()->json([
+            'token' => $user->createToken('appToken')->plainTextToken
+        ], 200);
     }
 
     /**
@@ -46,11 +60,10 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function logout()
+    public function logout(Request $request)
     {
-        auth()->logout();
-
-        return response()->json(['message' => 'Successfully logged out']);
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['msg' => 'logout'], 200);
     }
 
     /**
@@ -60,12 +73,4 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
-        ]);
-    }
 }
