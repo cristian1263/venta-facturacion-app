@@ -15,5 +15,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::view('/sesion', 'sesion')->name('sesion');
-Route::view('/home', 'home')->name('home');
+//Route::view('/home', 'home')->name('home');
 //Route::view('/AuthController.php', 'app\Http\Controllers\AuthController.php')->name('controlador');
